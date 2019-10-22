@@ -13,7 +13,7 @@ public class App extends Application {
 		
 		controller = new Controller();
 		
-		Scene escena = new Scene(controller.getRoot(), 600, 800);
+		Scene escena = new Scene(controller.getRoot(), 700, 800);
 		
 		primaryStage.setScene(escena);
 		primaryStage.setTitle("Acceso a datos");

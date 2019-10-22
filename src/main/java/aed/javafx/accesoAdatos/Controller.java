@@ -158,13 +158,13 @@ private void onModificarContenido(ActionEvent e) {
 		
 		 // Si la ruta es mayor a 2 (minimo Windows)
 		
-		if(ruta.length()>2) {			
+				
 			
 		File carpeta = new File(ruta); // Crar objeto File
 		
 		//Si no existe la carpeta crear directorio y enviar mensaje
 		
-		if (!carpeta.exists()) {			
+		if (!carpeta.exists() && ruta.length()>2) {	// Comprobamos que exista el fichero y que la ruta sea absoluta	
 			carpeta.mkdir();
 			System.out.println("Se creado la carpeta");
 			Alert alert = new Alert(AlertType.INFORMATION);
@@ -178,11 +178,11 @@ private void onModificarContenido(ActionEvent e) {
 			Alert alert = new Alert(AlertType.ERROR);
 			alert.setTitle("Acceso a datos");
 			alert.setHeaderText("Ups, ha ocurrido un problema");
-			alert.setContentText("La carpeta ya existe");
+			alert.setContentText("No se ha podido crear la carpeta");
 			alert.showAndWait();
 		}
 
-		}
+		
 	}
 	
 	/**
@@ -200,7 +200,7 @@ private void onModificarContenido(ActionEvent e) {
 		
 		//Si la ruta  es mayor a 2 (minimo windows)
 		
-		if(ruta.length()>2) { 
+		
 		
 		File fichero = new File(ruta); //Crear objeto File
 		
@@ -235,11 +235,11 @@ private void onModificarContenido(ActionEvent e) {
 			Alert alert = new Alert(AlertType.ERROR);
 			alert.setTitle("Acceso a datos");
 			alert.setHeaderText("Ups, ha ocurrido un problema");
-			alert.setContentText("El ficero ya existe");
+			alert.setContentText("No se ha podido crear el fichero");
 			alert.showAndWait();
 		}
 
-		}
+		
 	}
 	
 	/**
