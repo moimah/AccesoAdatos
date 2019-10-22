@@ -206,7 +206,7 @@ private void onModificarContenido(ActionEvent e) {
 		
 		//Si no existe el fichero  crear nuevo y  enviar mensaje
 
-		if (!fichero.exists()) { 
+		if (!fichero.exists() && ruta.length()>2) { // Comprobamos que exista el fichero y que la ruta sea absoluta
 			
 			try {
 				
@@ -256,7 +256,7 @@ private void onModificarContenido(ActionEvent e) {
 
 		File fileDel = new File(ruta); // Archivo file con la ruta
 
-		if (fileDel.exists()) { // Comprobamos que exista el fichero
+		if (fileDel.exists() && ruta.length()>2) { // Comprobamos que exista el fichero y que la ruta sea absoluta
 
 			// Si se ha borrado, mostrar mensaje
 
@@ -302,6 +302,12 @@ private void onModificarContenido(ActionEvent e) {
 		
 		if(origen.length()>2 && destino.length()>2) { // Si el origen y el destino son mayores a 2 (minimo Windows)
 		moverFile(origen, destino); //Llamar método mover
+		}else { //Mensaje de no se ha podido mover
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Acceso a datos");
+			alert.setHeaderText("Ups, ha ocurrido un problema");
+			alert.setContentText("No se ha movido");
+			alert.showAndWait();			
 		}
 
 	}
@@ -444,35 +450,36 @@ private void onModificarContenido(ActionEvent e) {
 	    	
 	    	File fileDel = new File(path);
 	    	
-	        if(fileDel.isDirectory()){         
-	           
-	        	// Si no tiene contenido borrar
-	            if(fileDel.list().length == 0) { 
-	            	 fileDel.delete();	
-	            	 exito = true;
-	            }  else{     // Si tiene contenido borrado recursivo                      	
-	           
-	               
-	               for (String temp : fileDel.list()) { 
-	                   File fileDelete = new File(fileDel, temp); 
-	                   //Borardo recursivo llamando al propio metodo
-	                   borrarFileRecursivamente(fileDelete.getPath());
-	                   
-	               }
-
-	               //Comprobar de nuevo el directorio, si esta vacio eliminar
-	               
-	               if(fileDel.list().length==0)
-	                   fileDel.delete();
-	              
-	            }
-
-	        }else{  //Si es archivo borrar	           
-	           
-	            fileDel.delete(); 
-	            exito = true;
-	        }
-	        
+	    	System.out.println("La ruta a borrar es " + path);
+//	        if(fileDel.isDirectory()){         
+//	           
+//	        	// Si no tiene contenido borrar
+//	            if(fileDel.list().length == 0) { 
+//	            	 fileDel.delete();	
+//	            	 exito = true;
+//	            }  else{     // Si tiene contenido borrado recursivo                      	
+//	           
+//	               
+//	               for (String temp : fileDel.list()) { 
+//	                   File fileDelete = new File(fileDel, temp); 
+//	                   //Borardo recursivo llamando al propio metodo
+//	                   borrarFileRecursivamente(fileDelete.getPath());
+//	                   
+//	               }
+//
+//	               //Comprobar de nuevo el directorio, si esta vacio eliminar
+//	               
+//	               if(fileDel.list().length==0)
+//	                   fileDel.delete();
+//	              
+//	            }
+//
+//	        }else{  //Si es archivo borrar	           
+//	           
+//	            fileDel.delete(); 
+//	            exito = true;
+//	        }
+//	        
 	        return exito;
 	    }
 	    
