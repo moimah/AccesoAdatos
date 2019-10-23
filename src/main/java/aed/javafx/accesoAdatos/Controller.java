@@ -16,12 +16,16 @@ import java.lang.reflect.Array;
 
 import javafx.beans.binding.Binding;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextInputControl;
@@ -38,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class Controller {
 
@@ -51,14 +56,11 @@ public class Controller {
 
 		model.sp_RutaTextProperty().bind(view.getTxt_RutaActual().textProperty());
 		model.sp_FicheroTextProperty().bind(view.getTxt_fichero().textProperty());
-		view.getLv_Listado().itemsProperty().bind(model.nombresProperty());
+		view.getLv_Listado().itemsProperty().bindBidirectional(model.nombresProperty());
+		
 		model.seleccionadoProperty().bind(view.getLv_Listado().getSelectionModel().selectedItemProperty());
-		
-		
 		model.sp_contenidoTextProperty().bindBidirectional(view.getTxt_Contenido().textProperty());
 		
-	
-		 
 		 
 		// To do (Bindeo al radioButton)
 
@@ -70,6 +72,13 @@ public class Controller {
 		view.getBtn_VerFicherosCarpetas().setOnAction(e -> onVerFicherosCarpetas(e));
 		view.getBtn_VerContenido().setOnAction(e -> onVerContenido(e));
 		view.getBtn_ModificarContenido().setOnAction(e->onModificarContenido(e));
+		view.getBtn_copiar().setOnAction(e -> onCopiar(e));
+		
+		model.getNombres().addListener(new ListChangeListener<String>() {
+			public void onChanged(Change<? extends String> c) {
+				onNombresChanged(c);
+			}
+		});
 		
 	}
 
@@ -117,12 +126,18 @@ public class Controller {
 	
 private void onMoverActionEvent(ActionEvent e) {
 		
+	
 		MoverFichero();
 		
 		
 	}
 
-
+private void onCopiar(ActionEvent e) {
+	copiarArchivo();
+	
+	
+	
+}
 
 private void onVerFicherosCarpetas(ActionEvent e) {
 	
@@ -139,6 +154,22 @@ private void onVerContenido(ActionEvent e) {
 private void onModificarContenido(ActionEvent e) {
 	
 	modificarContenido();
+}
+
+private void onNombresChanged(Change<? extends String> c) {
+	
+	System.out.println("Se ha detectdo un cambio");
+	while (c.next()) {
+		
+		for (String nuevo : c.getAddedSubList()) {
+			System.out.println("se ha añadido " + nuevo);
+		}
+
+		for (String quitado : c.getRemoved()) {
+			System.out.println("se ha quitado " + quitado);
+		}
+		
+	}
 }
 
 
@@ -254,37 +285,62 @@ private void onModificarContenido(ActionEvent e) {
 
 		String ruta = model.getSp_RutaText().concat("\\").concat(model.getSp_FicheroText());
 
-		File fileDel = new File(ruta); // Archivo file con la ruta
+		if(model.getSp_RutaText().length()<1 || model.getSp_FicheroText().length()<1) {
+			
+			Alert alerta = new Alert(AlertType.ERROR);
+			alerta.setTitle("Acceso a datos");
+			alerta.setHeaderText("Ups, ha ocurrido un problema");
+			//alerta.setContentText("No se ha movido");
+			alerta.setContentText("Completa ambos campos");
+			alerta.showAndWait();
+						
+			}else { //Si no ejecutar codigo	
 
-		if (fileDel.exists() && ruta.length()>2) { // Comprobamos que exista el fichero y que la ruta sea absoluta
+			File fileDel = new File(ruta); // Archivo file con la ruta
 
-			// Si se ha borrado, mostrar mensaje
+			if (fileDel.exists() && ruta.length() > 2) { // Comprobamos que exista el fichero y que la ruta sea absoluta
 
-			if (borrarFileRecursivamente(ruta)) {
+				Alert alerta = new Alert(AlertType.CONFIRMATION);
+				alerta.setTitle("Acceso a datos");
+				alerta.setHeaderText("BORRAR FICHERO");
+				alerta.setContentText("Esta seguro de borrar: " + ruta);
+				alerta.showAndWait();		
+				
+				Optional<ButtonType> result = alerta.showAndWait(); //Almacena el resultado de un boton
+				
 
-				Alert alert = new Alert(AlertType.INFORMATION);
-				alert.setTitle("Acceso a datos");
-				alert.setHeaderText("Enhorabuena");
-				alert.setContentText("Se ha eliminado");
-				alert.showAndWait();
-			} else { // Si no mostrar mensaje de problema
+				// Si se ha borrado, mostrar mensaje
+				
+				if(result.get() == ButtonType.OK) {
+					if (borrarFileRecursivamente(ruta)) {
+
+						Alert alert = new Alert(AlertType.INFORMATION);
+						alert.setTitle("Acceso a datos");
+						alert.setHeaderText("Enhorabuena");
+						alert.setContentText("Se ha eliminado");
+						alert.showAndWait();
+					} else { // Si no mostrar mensaje de problema
+
+						Alert alert = new Alert(AlertType.ERROR);
+						alert.setTitle("Acceso a datos");
+						alert.setHeaderText("Ups, ha ocurrido un problema");
+						alert.setContentText("No existe el archivo");
+						alert.showAndWait();
+					}
+				}
+				
+			} else { // Si no mostrar mensaje de que no se ha borrado
 
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setTitle("Acceso a datos");
 				alert.setHeaderText("Ups, ha ocurrido un problema");
-				alert.setContentText("No existe el archivo");
+				alert.setContentText("No se ha borrado");
 				alert.showAndWait();
 			}
-		} else { // Si no mostrar mensaje de que no se ha borrado
 
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Acceso a datos");
-			alert.setHeaderText("Ups, ha ocurrido un problema");
-			alert.setContentText("No se ha borrado");
-			alert.showAndWait();
 		}
-
 	}
+		
 	
 	/**
 	* Metodo que permite mover ficheros
@@ -294,23 +350,89 @@ private void onModificarContenido(ActionEvent e) {
 	*/
 
 	public void MoverFichero() {
-		
-		//Strings que almacenan las rutas de origen y destino
-		
-		String origen = model.getSp_RutaText();	
-		String destino = model.getSp_FicheroText();	
-		
-		if(origen.length()>2 && destino.length()>2) { // Si el origen y el destino son mayores a 2 (minimo Windows)
-		moverFile(origen, destino); //Llamar método mover
-		}else { //Mensaje de no se ha podido mover
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Acceso a datos");
-			alert.setHeaderText("Ups, ha ocurrido un problema");
-			alert.setContentText("No se ha movido");
-			alert.showAndWait();			
-		}
 
+		// Strings que almacenan las rutas de origen y destino
+
+		
+		if(model.getSp_RutaText().length()<1 || model.getSp_FicheroText().length()<1) {
+		
+		Alert alerta = new Alert(AlertType.ERROR);
+		alerta.setTitle("Acceso a datos");
+		alerta.setHeaderText("Ups, ha ocurrido un problema");
+		//alerta.setContentText("No se ha movido");
+		alerta.setContentText("Completa ambos campos");
+		alerta.showAndWait();
+		}else { //Si no ejecutar codigo		
+		
+		String origen = model.getSp_RutaText();
+		String destino = model.getSp_FicheroText();
+
+		if (origen.length() > 2 && destino.length() > 2) { // Si el origen y el destino son mayores a 2 (minimo Windows)
+			
+			if (moverFile(origen, destino)) {
+				Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setTitle("Acceso a datos");
+				alert.setHeaderText("Enhorabuena");
+				alert.setContentText("Se ha movido el fichero");
+				alert.showAndWait();
+
+			} else {// Llamar método mover
+
+				Alert alert = new Alert(AlertType.ERROR);
+				alert.setTitle("Acceso a datos");
+				alert.setHeaderText("Ups, ha ocurrido un problema");
+				alert.setContentText("No se ha movido");
+				alert.showAndWait();
+			}
+		}
+		
+		}
 	}
+	
+	
+    /**
+     * Metodo que ejecuta el borrado y envia avisos 
+     *  de si se ha borrado o no, se apoya del método
+     *  copiadoRecursivo para realizar la operación	     
+     */
+  
+    
+    private void copiarArchivo() {
+   
+    	String path_a = model.getSp_RutaText();
+    	File origen = new File(path_a);
+    	
+    	String path_b = model.getSp_FicheroText();
+    	String path_destino = path_b.concat("\\").concat(origen.getName());
+    	File destino = new File(path_destino);
+    	
+    	if(origen.exists() && !destino.exists()) {
+    		if(copiadoRecursivo(origen, destino)) {
+    			Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setTitle("Acceso a datos");
+				alert.setHeaderText("Enhorabuena");
+				alert.setContentText("Se ha copiado el fichero");
+				alert.showAndWait();    			
+    		}else {
+    			Alert alert = new Alert(AlertType.ERROR);
+				alert.setTitle("Acceso a datos");
+				alert.setHeaderText("Ups, ha ocurrido un problema");
+				alert.setContentText("No se ha copiado");
+				alert.showAndWait();
+    		}
+    		}else {
+    		
+        			Alert alert = new Alert(AlertType.ERROR);
+    				alert.setTitle("Acceso a datos");
+    				alert.setHeaderText("Ups, ha ocurrido un problema");
+    				alert.setContentText("No se ha copiado");
+    				alert.showAndWait();
+    		}
+    	
+    	
+    
+    }
+    
 	
 	/**
 	* Metodo que permite ver ficheros en un listView
@@ -322,7 +444,7 @@ private void onModificarContenido(ActionEvent e) {
 		
 		//String que contiene la ruta 
 		
-		String ruta = model.getSp_RutaText().concat("\\").concat(model.getSp_FicheroText()); 	
+		String ruta = model.getSp_RutaText().concat("\\"); 	
 		
 		if(ruta.length()>2) { //Si la ruta es mayor a 2 (Minimo windows) 	
 			
@@ -345,7 +467,7 @@ private void onModificarContenido(ActionEvent e) {
 		//Creamos un path concatenando contenido de ruta con fichero
 		
 				
-		String ruta = model.getSp_RutaText().concat("\\").concat(model.getSp_FicheroText());
+		String ruta = model.getSp_RutaText();
 		
 		//Obtenemos el elemento seleccionado de la lista
 		
@@ -390,7 +512,7 @@ private void onModificarContenido(ActionEvent e) {
 
 		// Creamos un path concatenando contenido de ruta con fichero
 
-		String ruta = model.getSp_RutaText().concat("\\").concat(model.getSp_FicheroText());
+		String ruta = model.getSp_RutaText();
 
 		// Obtenemos el elemento seleccionado de la lista
 
@@ -437,51 +559,50 @@ private void onModificarContenido(ActionEvent e) {
 	
 	
 	
-		/**
-	   * Metodo para borrar una carpeta recursivamente
-	   * Recibe por parametro path de File a eliminar
-	   * Realiza borado recursivo en caso de que tenga más carpetas
-	   * @param fileDel 		
-	   * @return exito
-	   */
-	    private boolean borrarFileRecursivamente(String path) {
-	    	
-	    	boolean exito = false;
-	    	
-	    	File fileDel = new File(path);
-	    	
-	    	System.out.println("La ruta a borrar es " + path);
-//	        if(fileDel.isDirectory()){         
-//	           
-//	        	// Si no tiene contenido borrar
-//	            if(fileDel.list().length == 0) { 
-//	            	 fileDel.delete();	
-//	            	 exito = true;
-//	            }  else{     // Si tiene contenido borrado recursivo                      	
-//	           
-//	               
-//	               for (String temp : fileDel.list()) { 
-//	                   File fileDelete = new File(fileDel, temp); 
-//	                   //Borardo recursivo llamando al propio metodo
-//	                   borrarFileRecursivamente(fileDelete.getPath());
-//	                   
-//	               }
-//
-//	               //Comprobar de nuevo el directorio, si esta vacio eliminar
-//	               
-//	               if(fileDel.list().length==0)
-//	                   fileDel.delete();
-//	              
-//	            }
-//
-//	        }else{  //Si es archivo borrar	           
-//	           
-//	            fileDel.delete(); 
-//	            exito = true;
-//	        }
-//	        
-	        return exito;
-	    }
+	/**
+	 * Metodo para borrar una carpeta recursivamente Recibe por parametro path de
+	 * File a eliminar Realiza borado recursivo en caso de que tenga más carpetas
+	 * @param fileDel
+	 * @return exito
+	 */
+	private boolean borrarFileRecursivamente(String path) {
+
+		boolean exito = false;
+
+		File fileDel = new File(path);
+
+		System.out.println("La ruta a borrar es " + path);
+		if (fileDel.isDirectory()) {
+
+			// Si no tiene contenido borrar
+			if (fileDel.list().length == 0) {
+				fileDel.delete();
+				exito = true;
+			} else { // Si tiene contenido borrado recursivo
+
+				for (String temp : fileDel.list()) {
+					File fileDelete = new File(fileDel, temp);
+					// Borardo recursivo llamando al propio metodo
+					borrarFileRecursivamente(fileDelete.getPath());
+					exito = true;
+				}
+
+				// Comprobar de nuevo el directorio, si esta vacio eliminar
+
+				if (fileDel.list().length == 0)
+					fileDel.delete();
+				exito = true;
+
+			}
+
+		} else { // Si es archivo borrar
+
+			fileDel.delete();
+			exito = true;
+		}
+
+		return exito;
+	}
 	    
 	    
 	    	/**
@@ -513,30 +634,9 @@ private void onModificarContenido(ActionEvent e) {
 	    
 	    
 	    
-	    /**
-	     * Este metodo esta sin implementar
-	     * @deprecated no usar no se ha verificado	     
-	     */
-	    @Deprecated
-	    
-	    private void copiarArchivo(String sOrigen, String sDestino) {
-	   
-	    	Path sourceFile = Paths.get(sOrigen);
-	    	Path targetFile = Paths.get(sDestino);
-	    	 
-	    	try {
-	    	 
-	    	    Files.copy(sourceFile, targetFile,
-	    	        StandardCopyOption.REPLACE_EXISTING);
-	    	 
-	    	} catch (IOException ex) {
-	    	    System.err.format("I/O Error when copying file");
-	    	}
-	    
-	    }
-	    
+
 	/**
-	 * Metodo que permite listar contenido de un fichero
+	 * Metodo que permite listar permite listar contenido de un directorio
 	 * Recibe un String con la ruta del fichero
 	 * Devuelve true si el fichero tiene contenido
 	 * @param path
@@ -546,6 +646,8 @@ private void onModificarContenido(ActionEvent e) {
 	private Boolean listarFicherosYcarpetas(String path) {
 
 		Boolean exito = false; // Variable de return
+		
+		model.getNombres().clear();
 
 		File directorio = new File(path); // Obj File a partir del path
 
@@ -565,27 +667,7 @@ private void onModificarContenido(ActionEvent e) {
 
 	}
     
-	    private String archivoSeleccionado() {
-	    	
-	    	String seleccionado = null;
-	    	
-//	    	ObservableList<String> items = view.getLv_Listado().getSelectionModel().getSelectedItems(); //ListView	    	
-//	    		
-//	    	
-//	    	
-//	    	for(String s : items) {	    		
-//	    		seleccionado  = s;	    		
-//	    	}    		
-//	    	
-//	    	
-////	    	System.out.println(seleccionado);
-	    	
-	    	
-	    	model.seleccionadoProperty().bind(view.getLv_Listado().getSelectionModel().selectedItemProperty());
-//	    	
-	    	return seleccionado; 
-	    }
-	    
+
 	    
 		/**
 		 * Metodo que permite leer fichero de texto y
@@ -599,7 +681,7 @@ private void onModificarContenido(ActionEvent e) {
 	    
 	    private String leerFichero(String path) {
 	    	
-	    	String lectura = ""; //Variable de rerno
+	    	String lectura = ""; //Variable de retorno
 	    	
 	    	File fich = new File(path); //Objeto file de la ruta
 	    	try {
@@ -689,7 +771,62 @@ private void onModificarContenido(ActionEvent e) {
 
 		}
 		
+	/**
+	 * Metodo que realiza el copiado recursivo de ficheros y diectorios
+	 * Recibe un parametro File de origen y otro File de destino
+	 * Verifica que no exista el directorio o fichero
+	 * Realizad el copiado o copiado recursivo según el caso
+	 * Devuelve true si se ha copiado y false si no se ha podido
+	 * @param d1
+	 * @param d2
+	 * @return fichero
+	 */
 
+	private boolean copiadoRecursivo(File d1, File d2) {
+
+		boolean exito = false;
+
+		// Parte del copiado recursivo de directorio
+		if (d1.isDirectory()) { // Si el origen es un directorio
+			// Recorremos recursivamente el directorio
+			if (!d2.exists()) { // Y no existe
+				d2.mkdir(); // Crear
+				System.out.println("Creando directorio " + d2.toString());
+				String[] ficheros = d1.list(); // Lista de ficheros que contiene el directorio
+				for (int x = 0; x < ficheros.length; x++) { // Bucle de copiado recursivo llamando al propio metodo
+					copiadoRecursivo(new File(d1, ficheros[x]), new File(d2, ficheros[x]));
+				}
+				exito = true;
+			}
+		} else {
+
+			if (d1.exists() && !d2.exists()) { // Si existe el fichero y no existe en el origen
+
+				try {
+					// Streams de E/S
+
+					InputStream in = new FileInputStream(d1);
+					OutputStream out = new FileOutputStream(d2);
+
+					byte[] buf = new byte[1024];
+					int len;
+
+					while ((len = in.read(buf)) > 0) {
+						out.write(buf, 0, len);
+					}
+
+					in.close();
+					out.close();
+					exito = true;
+
+				} catch (IOException ioe) {
+					ioe.printStackTrace();
+				}
+			}
+		}
+
+		return exito;
+	}
 		
 		
 		

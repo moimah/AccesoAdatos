@@ -37,6 +37,7 @@ public class View extends TabPane {
 	private Button btn_Crear;
 	private Button btn_Eliminar;
 	private Button btn_Mover;	
+	private Button btn_copiar;
 	
 	private RadioButton rd_EsCarpeta;
 	private RadioButton rd_EsFichero;
@@ -86,6 +87,9 @@ public class View extends TabPane {
 		btn_Eliminar.setPrefWidth(65);
 		btn_Mover = new Button("Mover");
 		btn_Mover.setPrefWidth(65);
+		btn_copiar = new Button("Copiar");
+		btn_copiar.setPrefWidth(65);
+		
 		group = new ToggleGroup(); //Grupo para los radioButton
 		rd_EsCarpeta = new RadioButton("Es carpeta");	
 		rd_EsCarpeta.setToggleGroup(group);	
@@ -101,7 +105,7 @@ public class View extends TabPane {
 			hbox_radio.setAlignment(Pos.BASELINE_RIGHT);
 			hbox_radio.setSpacing(30);
 			hbox_radio.setPadding(new Insets(10));
-		HBox hbox_2 = new HBox(20, btn_Crear, btn_Eliminar, btn_Mover,hbox_radio);
+		HBox hbox_2 = new HBox(20, btn_Crear, btn_Eliminar, btn_Mover, btn_copiar, hbox_radio);
 		hbox_2.setHgrow(hbox_radio, Priority.ALWAYS);
 		hbox_2.setPadding(new Insets(10));
 		
@@ -233,6 +237,14 @@ public class View extends TabPane {
 	public Button getBtn_Mover() {
 		return btn_Mover;
 	}
+
+
+
+	public Button getBtn_copiar() {
+		return btn_copiar;
+	}
+
+
 
 
 
